@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <title>Bundle Devices</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      padding: 20px;
+    }
+    h1 {
+      text-align: center;
+    }
+    .user-list .user {
+      border: 1px solid #ddd;
+      padding: 10px;
+      margin-bottom: 10px;
+      border-radius: 5px;
+      transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    .user.verified {
+      background-color: #d4edda;
+      border-color: #c3e6cb;
+    }
+    .user.not-verified {
+      background-color: #f8d7da;
+      border-color: #f5c6cb;
+    }
+    .user span {
+      display: block;
+      margin: 5px 0;
+    }
+    .verify-btn {
+      margin-top: 10px;
+      padding: 8px 12px;
+      background-color: #007bff;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    .verify-btn:hover {
+      background-color: #0056b3;
+    }
+    .show-key-btn {
+      margin-top: 30px;
+      padding: 15px 20px;
+      font-size: 16px;
+      border: none;
+      border-radius: 6px;
+      cursor: pointer;
+      display: block;
+      width: 100%;
+      max-width: 300px;
+      margin-left: auto;
+      margin-right: auto;
+      transition: background-color 0.3s ease;
+    }
+    .show-key {
+      background-color: #28a745;
+      color: white;
+    }
+    .show-key:hover {
+      background-color: #218838;
+    }
+    .hide-key {
+      background-color: #dc3545;
+      color: white;
+    }
+    .hide-key:hover {
+      background-color: #c82333;
+    }
+    #myPublicKey {
+      text-align: center;
+      margin-top: 15px;
+      font-size: 16px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Bundle Devices</h1>
+  <div id="userList" class="user-list"></div>
+
+  <!-- for show public key button -->
+  
+  <button id="toggleKeyBtn" class="show-key-btn show-key" onclick="toggleMyPublicKey()">Show My Public Key</button>
+  <div id="myPublicKey"></div>
+  
+
+  <script>
+    const loggedInUsername = "user1";
+
+    const mockData = {
+      members: [
+        {
+          UserName: "user1",
+          device_id: "device1",
+          public_key: "PUBKEY1",
+          verified: "Yes"
+        },
+        {
+          UserName: "user2",
+          device_id: "device2",
+          public_key: "PUBKEY2",
+          verified: "No"
+        },
+        {
+          UserName: "user3",
+          device_id: "device3",
+          public_key: "PUBKEY3",
+          verified: "Yes"
+        },
+        {
+          UserName: "user4",
+          device_id: "device4",
+          public_key: "PUBKEY4",
+          verified: "No"
+        }
+      ]
+    };
+
+    function fetchDevices() {
+      const userListDiv = document.getElementById("userList");
+      userListDiv.innerHTML = '';
+
+      mockData.members.forEach(member => {
+
+        //skip logged in user
+        if (member.UserName == loggedInUsername) {
+          return;
+        }
+        const userDiv = document.createElement("div");
+        userDiv.classList.add("user");
+        userDiv.id = `user-${member.device_id}`;
+
+        const isVerified = member.verified.toLowerCase() === "yes";
+        userDiv.classList.add(isVerified ? "verified" : "not-verified");
+
+        userDiv.innerHTML = `
+          <span><strong>Username:</strong> ${member.UserName}</span>
+          <span><strong>Device ID:</strong> ${member.device_id}</span>
+          <span><strong>Public Key:</strong> ${member.public_key}</span>
+        `;
+
+        if (!isVerified) {
+          const verifyBtn = document.createElement("button");
+          verifyBtn.className = "verify-btn";
+          verifyBtn.innerText = "Verify Device";
+          verifyBtn.onclick = () => confirmVerification(member.device_id, member.UserName);
+          userDiv.appendChild(verifyBtn);
+        }
+
+        userListDiv.appendChild(userDiv);
+      });
+    }
+
+    function confirmVerification(deviceId, username) {
+      const confirmed = confirm(`Are you sure you want to verify device for ${username}?`);
+      if (confirmed) {
+        verifyDevice(deviceId);
+      }
+    }
+
+    function verifyDevice(deviceId) {
+      const userDiv = document.getElementById(`user-${deviceId}`);
+      const member = mockData.members.find(m => m.device_id === deviceId);
+      if (member) member.verified = "Yes";
+
+      userDiv.classList.remove("not-verified");
+      userDiv.classList.add("verified");
+
+      const button = userDiv.querySelector(".verify-btn");
+      if (button) button.remove();
+    }
+
+    let isKeyVisible = false;
+
+    function toggleMyPublicKey() {
+      const outputDiv = document.getElementById("myPublicKey");
+      const btn = document.getElementById("toggleKeyBtn");
+      const currentUser = mockData.members.find(m => m.UserName === loggedInUsername);
+
+      if (!currentUser) {
+        outputDiv.innerText = "User not found.";
+        return;
+      }
+
+      if (!isKeyVisible) {
+        outputDiv.innerText = `Your Public Key: ${currentUser.public_key}`;
+        btn.innerText = "Hide My Public Key";
+        btn.classList.remove("show-key");
+        btn.classList.add("hide-key");
+      } else {
+        outputDiv.innerText = "";
+        btn.innerText = "Show My Public Key";
+        btn.classList.remove("hide-key");
+        btn.classList.add("show-key");
+      }
+
+      isKeyVisible = !isKeyVisible;
+    }
+
+    window.onload = fetchDevices;
+  </script>
+
+</body>
+</html>
